@@ -25,6 +25,11 @@ HaptiX performs a "hardcore" assembly of your audio:
 2. Install it on your Android device (requires Android 15+ for full feature support).
 3. Grant necessary permissions (Media access and Vibration).
 
+## Compatibility
+
+- **Tested Devices**: 100% working on **Samsung Galaxy S22 and higher** running **One UI 7 and 8**.
+- **Earlier Models**: No tests have been conducted on models released prior to the S22 series. Full haptic functionality may vary on older hardware.
+
 ## Usage
 
 1. Launch HaptiX.
