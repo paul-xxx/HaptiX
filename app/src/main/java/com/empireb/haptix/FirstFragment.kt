@@ -89,12 +89,12 @@ class FirstFragment : Fragment() {
         setupPlayerControls()
         showStartupWarning()
         
-        binding.buttonSelect.setOnClickListener {
-            selectFileLauncher.launch("audio/*")
-        }
-
         checkAndRequestPermissions()
         bindPlayerService()
+    }
+
+    fun triggerFileSelection() {
+        selectFileLauncher.launch("audio/*")
     }
 
     private fun checkAndRequestPermissions() {
@@ -347,7 +347,6 @@ class FirstFragment : Fragment() {
             originalName + "_haptic.ogg"
         }
 
-        binding.buttonSelect.isEnabled = false
         binding.progressBar.visibility = View.VISIBLE
 
         lifecycleScope.launch {
@@ -361,7 +360,6 @@ class FirstFragment : Fragment() {
             }
             
             _binding?.let {
-                it.buttonSelect.isEnabled = true
                 it.progressBar.visibility = View.GONE
                 
                 if (result) {

@@ -5,11 +5,9 @@
     <string name="second_fragment_label">Settings</string>
     <string name="select_file">Prepare</string>
     <string name="status_initial">Select an MP3 file to convert</string>
-    <string name="status_processing">Processing... Please wait.</string>
     <string name="status_success">Success!</string>
     <string name="status_failed">Conversion failed. Check logs.</string>
     <string name="previous">Previous</string>
-    <string name="lorem_ipsum">Settings content here.</string>
 
     <string name="converted_files">Converted Files</string>
     <string name="select_a_file">Select a file</string>

@@ -5,7 +5,6 @@
     <string name="second_fragment_label">Настройки</string>
     <string name="select_file">Подготовить</string>
     <string name="status_initial">Выберите MP3 файл для конвертации</string>
-    <string name="status_processing">Обработка… Пожалуйста, подождите.</string>
     <string name="status_success">Готово!</string>
     <string name="status_failed">Ошибка конвертации. Проверьте логи.</string>
     <string name="previous">Назад</string>

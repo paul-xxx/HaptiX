@@ -37,6 +37,15 @@ class MainActivity : AppCompatActivity() {
 
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+
+        binding.buttonPrepareToolbar.setOnClickListener {
+            val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
+            val currentFragment = navHostFragment.childFragmentManager.fragments.firstOrNull()
+            if (currentFragment is FirstFragment) {
+                currentFragment.triggerFileSelection()
+            }
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {

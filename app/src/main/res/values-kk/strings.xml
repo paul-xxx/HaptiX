@@ -5,7 +5,6 @@
     <string name="second_fragment_label">Параметрлер</string>
     <string name="select_file">Дайындау</string>
     <string name="status_initial">Конвертациялау үшін MP3 файлын таңдаңыз</string>
-    <string name="status_processing">Өңдеу… Күте тұрыңыз.</string>
     <string name="status_success">Дайын!</string>
     <string name="status_failed">Конвертациялау қатесі. Логтарды тексеріңіз.</string>
     <string name="previous">Артқа</string>
