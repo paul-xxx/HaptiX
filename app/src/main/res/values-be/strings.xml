@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">HaptiX</string>
+    <string name="action_settings">Налады</string>
+    <string name="first_fragment_label">HaptiX</string>
+    <string name="second_fragment_label">Налады</string>
+    <string name="select_file">Падрыхтаваць</string>
+    <string name="status_initial">Выберыце MP3 файл для канвертацыі</string>
+    <string name="status_processing">Апрацоўка… Калі ласка, пачакайце.</string>
+    <string name="status_success">Гатова!</string>
+    <string name="status_failed">Памылка канвертацыі. Праверце логі.</string>
+    <string name="previous">Назад</string>
+
+    <string name="converted_files">Гатовыя файлы</string>
+    <string name="select_a_file">Выберыце файл</string>
+    <string name="playing_with_haptics">Зараз з вібрацыяй</string>
+
+    <string name="menu_play">Іграць</string>
+    <string name="menu_delete">Выдаліць</string>
+    <string name="menu_share">Падзяліцца</string>
+    <string name="menu_rename">Перайменаваць</string>
+    <string name="menu_info">Інфо</string>
+
+    <string name="delete_confirm">Вы ўпэўнены, што хочаце выдаліць гэты файл?</string>
+    <string name="rename_title">Перайменаваць файл</string>
+    <string name="ok">ОК</string>
+    <string name="cancel">Адмена</string>
+    <string name="info_title">Інфармацыя пра файл</string>
+
+    <string name="warning_title">Папярэджанне</string>
+    <string name="warning_message">Аўтар гэтага прыкладання не нясе адказнасці за вібраматор, які выйшаў са строю. Не рэкамендуецца выкарыстоўваць для працяглага праслухоўвання.\n\nПарада: інтэнсіўнасць вібрацыі можна паменшыць у наладах тэлефона ў параметрах гуку.</string>
+</resources>

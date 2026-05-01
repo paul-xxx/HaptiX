@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">HaptiX</string>
+    <string name="action_settings">Configurações</string>
+    <string name="first_fragment_label">HaptiX</string>
+    <string name="second_fragment_label">Configurações</string>
+    <string name="select_file">Preparar</string>
+    <string name="status_initial">Selecione um arquivo MP3 para converter</string>
+    <string name="status_processing">Processando... Por favor, aguarde.</string>
+    <string name="status_success">Sucesso!</string>
+    <string name="status_failed">Falha na conversão. Verifique os logs.</string>
+    <string name="previous">Voltar</string>
+
+    <string name="converted_files">Arquivos Convertidos</string>
+    <string name="select_a_file">Selecione um arquivo</string>
+    <string name="playing_with_haptics">Reproduzindo com Haptics</string>
+
+    <string name="menu_play">Reproduzir</string>
+    <string name="menu_delete">Excluir</string>
+    <string name="menu_share">Compartilhar</string>
+    <string name="menu_rename">Renomear</string>
+    <string name="menu_info">Informações</string>
+
+    <string name="delete_confirm">Tem certeza de que deseja excluir este arquivo?</string>
+    <string name="rename_title">Renomear Arquivo</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancelar</string>
+    <string name="info_title">Informações do Arquivo</string>
+
+    <string name="warning_title">Aviso</string>
+    <string name="warning_message">O autor deste aplicativo não se responsabiliza por falhas no motor de vibração. Não é recomendado o uso para audição prolongada.\n\nDica: você pode reduzir a intensidade da vibração nas configurações do telefone, em parâmetros de som.</string>
+</resources>

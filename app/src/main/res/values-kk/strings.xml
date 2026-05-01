@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">HaptiX</string>
+    <string name="action_settings">Параметрлер</string>
+    <string name="first_fragment_label">HaptiX</string>
+    <string name="second_fragment_label">Параметрлер</string>
+    <string name="select_file">Дайындау</string>
+    <string name="status_initial">Конвертациялау үшін MP3 файлын таңдаңыз</string>
+    <string name="status_processing">Өңдеу… Күте тұрыңыз.</string>
+    <string name="status_success">Дайын!</string>
+    <string name="status_failed">Конвертациялау қатесі. Логтарды тексеріңіз.</string>
+    <string name="previous">Артқа</string>
+
+    <string name="converted_files">Дайын файлдар</string>
+    <string name="select_a_file">Файлды таңдаңыз</string>
+    <string name="playing_with_haptics">Дірілмен ойнатылуда</string>
+
+    <string name="menu_play">Ойнату</string>
+    <string name="menu_delete">Өшіру</string>
+    <string name="menu_share">Бөлісу</string>
+    <string name="menu_rename">Атын өзгерту</string>
+    <string name="menu_info">Ақпарат</string>
+
+    <string name="delete_confirm">Бұл файлды өшіруге сенімдісіз бе?</string>
+    <string name="rename_title">Файл атын өзгерту</string>
+    <string name="ok">ОК</string>
+    <string name="cancel">Бас тарту</string>
+    <string name="info_title">Файл туралы ақпарат</string>
+
+    <string name="warning_title">Ескерту</string>
+    <string name="warning_message">Бұл қолданбаның авторы істен шыққан діріл моторы үшін жауапты емес. Ұзақ тыңдау үшін пайдалану ұсынылмайды.\n\nКеңес: діріл қарқындылығын телефон параметрлеріндегі дыбыс параметрлерінде азайтуға болады.</string>
+</resources>

@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">HaptiX</string>
+    <string name="action_settings">Налаштування</string>
+    <string name="first_fragment_label">HaptiX</string>
+    <string name="second_fragment_label">Налаштування</string>
+    <string name="select_file">Підготувати</string>
+    <string name="status_initial">Виберіть MP3 файл для конвертації</string>
+    <string name="status_processing">Обробка… Будь ласка, зачекайте.</string>
+    <string name="status_success">Готово!</string>
+    <string name="status_failed">Помилка конвертації. Перевірте логи.</string>
+    <string name="previous">Назад</string>
+
+    <string name="converted_files">Готові файли</string>
+    <string name="select_a_file">Виберіть файл</string>
+    <string name="playing_with_haptics">Грає з вібрацією</string>
+
+    <string name="menu_play">Грати</string>
+    <string name="menu_delete">Видалити</string>
+    <string name="menu_share">Поділитися</string>
+    <string name="menu_rename">Перейменувати</string>
+    <string name="menu_info">Інфо</string>
+
+    <string name="delete_confirm">Ви впевнені, що хочете видалити цей файл?</string>
+    <string name="rename_title">Перейменувати файл</string>
+    <string name="ok">ОК</string>
+    <string name="cancel">Скасувати</string>
+    <string name="info_title">Інформація про файл</string>
+
+    <string name="warning_title">Попередження</string>
+    <string name="warning_message">Автор цього додатка не несе відповідальності за вихід з ладу вібромотора. Не рекомендується використовувати для тривалого прослуховування.\n\nПорада: інтенсивність вібрації можна зменшити в налаштуваннях телефону в параметрах звуку.</string>
+</resources>
