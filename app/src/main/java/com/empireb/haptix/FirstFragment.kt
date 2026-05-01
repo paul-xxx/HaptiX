@@ -5,12 +5,13 @@ import android.app.AlertDialog
 import android.content.*
 import android.content.pm.PackageManager
 import android.media.AudioManager
+import android.media.AudioAttributes
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.*
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
-import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,6 +28,7 @@ import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
 import com.empireb.haptix.databinding.FragmentFirstBinding
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -58,9 +60,12 @@ class FirstFragment : Fragment() {
         }
     }
 
-    private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        if (!isGranted) {
-            Toast.makeText(context, "Notifications permission is required for background playback", Toast.LENGTH_SHORT).show()
+    private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        val allGranted = permissions.entries.all { it.value }
+        if (allGranted) {
+            loadFiles()
+        } else {
+            Toast.makeText(context, "Permissions are required for all features to work", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -79,7 +84,6 @@ class FirstFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        checkPermissions()
         setupRecyclerView()
         checkHapticSupport()
         setupPlayerControls()
@@ -89,15 +93,28 @@ class FirstFragment : Fragment() {
             selectFileLauncher.launch("audio/*")
         }
 
-        loadFiles()
+        checkAndRequestPermissions()
         bindPlayerService()
     }
 
-    private fun checkPermissions() {
+    private fun checkAndRequestPermissions() {
+        val neededPermissions = mutableListOf<String>()
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
+            neededPermissions.add(Manifest.permission.READ_MEDIA_AUDIO)
+            neededPermissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            neededPermissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        
+        val toRequest = neededPermissions.filter {
+            ContextCompat.checkSelfPermission(requireContext(), it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (toRequest.isNotEmpty()) {
+            permissionLauncher.launch(toRequest.toTypedArray())
+        } else {
+            loadFiles()
         }
     }
 
@@ -151,7 +168,6 @@ class FirstFragment : Fragment() {
         binding.buttonPrevious.setOnClickListener { playerService?.playPrevious() }
         
         binding.buttonShuffle.setOnClickListener {
-            // Service-side shuffle logic can be added, for now just UI feedback
             Toast.makeText(context, "Shuffle toggled", Toast.LENGTH_SHORT).show()
         }
         
@@ -262,6 +278,7 @@ class FirstFragment : Fragment() {
                 MediaStore.Audio.Media.DATE_MODIFIED
             )
             
+            // Более надежный поиск по относительной дорожке
             val selection = "${MediaStore.Audio.Media.RELATIVE_PATH} LIKE ?"
             val selectionArgs = arrayOf("%Haptic Converted%")
             
