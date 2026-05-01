@@ -26,6 +26,13 @@
     <string name="cancel">Бас тарту</string>
     <string name="info_title">Файл туралы ақпарат</string>
 
+    <string name="notif_channel_name">HaptiX ойнату</string>
+    <string name="notif_play">Ойнату</string>
+    <string name="notif_pause">Пауза</string>
+    <string name="notif_next">Келесі</string>
+    <string name="notif_prev">Алдыңғы</string>
+    <string name="notif_content_text">HaptiX ойнатқышы</string>
+
     <string name="warning_title">Ескерту</string>
     <string name="warning_message">Бұл қолданбаның авторы істен шыққан діріл моторы үшін жауапты емес. Ұзақ тыңдау үшін пайдалану ұсынылмайды.\n\nКеңес: діріл қарқындылығын телефон параметрлеріндегі дыбыс параметрлерінде азайтуға болады.</string>
 </resources>

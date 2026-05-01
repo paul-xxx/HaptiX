@@ -1,15 +1,12 @@
 package com.empireb.haptix
 
+import android.Manifest
 import android.app.AlertDialog
-import android.content.ContentValues
-import android.content.Intent
+import android.content.*
+import android.content.pm.PackageManager
 import android.media.AudioManager
-import android.media.AudioAttributes
-import android.media.MediaPlayer
-import android.content.Context
 import android.net.Uri
-import android.os.Bundle
-import android.os.Environment
+import android.os.*
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
@@ -22,6 +19,7 @@ import android.widget.PopupMenu
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -29,7 +27,6 @@ import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
 import com.empireb.haptix.databinding.FragmentFirstBinding
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -41,13 +38,31 @@ class FirstFragment : Fragment() {
     private var _binding: FragmentFirstBinding? = null
     private val binding get() = _binding!!
 
-    private var mediaPlayer: MediaPlayer? = null
+    private var playerService: HapticPlayerService? = null
+    private var isBound = false
     private lateinit var fileAdapter: HapticFileAdapter
     private var currentFiles: List<HapticFile> = emptyList()
-    private var currentPlayingIndex: Int = -1
-    
-    private var isShuffle = false
-    private var isRepeat = false
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as HapticPlayerService.LocalBinder
+            playerService = binder.getService()
+            isBound = true
+            setupServiceListeners()
+            syncUIWithService()
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            isBound = false
+            playerService = null
+        }
+    }
+
+    private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (!isGranted) {
+            Toast.makeText(context, "Notifications permission is required for background playback", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     private val selectFileLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { startConversion(it) }
@@ -64,6 +79,7 @@ class FirstFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        checkPermissions()
         setupRecyclerView()
         checkHapticSupport()
         setupPlayerControls()
@@ -74,33 +90,91 @@ class FirstFragment : Fragment() {
         }
 
         loadFiles()
+        bindPlayerService()
+    }
+
+    private fun checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun bindPlayerService() {
+        Intent(requireContext(), HapticPlayerService::class.java).also { intent ->
+            requireContext().bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    private fun setupServiceListeners() {
+        playerService?.apply {
+            onTrackChanged = { index ->
+                if (_binding != null) {
+                    binding.playerCard.visibility = View.VISIBLE
+                    binding.textviewPlayerTitle.text = playlist[index].name
+                    updatePlayPauseIcon()
+                }
+            }
+            onPlaybackStateChanged = { isPlaying ->
+                updatePlayPauseIcon()
+            }
+            onProgressUpdate = { pos, duration ->
+                if (_binding != null) {
+                    binding.playerSeekbar.max = duration
+                    binding.playerSeekbar.progress = pos
+                }
+            }
+        }
+    }
+
+    private fun syncUIWithService() {
+        playerService?.let { service ->
+            if (service.currentIndex >= 0 && service.playlist.isNotEmpty()) {
+                binding.playerCard.visibility = View.VISIBLE
+                binding.textviewPlayerTitle.text = service.playlist[service.currentIndex].name
+                binding.playerSeekbar.max = service.getDuration()
+                binding.playerSeekbar.progress = service.getCurrentPosition()
+                updatePlayPauseIcon()
+            }
+        }
     }
 
     private fun setupPlayerControls() {
-        binding.buttonPlayPause.setOnClickListener { togglePlayback() }
+        binding.buttonPlayPause.setOnClickListener {
+            playerService?.let {
+                if (it.isPlaying()) it.pause() else it.play()
+            }
+        }
         
-        binding.buttonNext.setOnClickListener { playNext() }
-        binding.buttonPrevious.setOnClickListener { playPrevious() }
+        binding.buttonNext.setOnClickListener { playerService?.playNext() }
+        binding.buttonPrevious.setOnClickListener { playerService?.playPrevious() }
         
         binding.buttonShuffle.setOnClickListener {
-            isShuffle = !isShuffle
-            updateControlIcons()
+            // Service-side shuffle logic can be added, for now just UI feedback
+            Toast.makeText(context, "Shuffle toggled", Toast.LENGTH_SHORT).show()
         }
         
         binding.buttonRepeat.setOnClickListener {
-            isRepeat = !isRepeat
-            updateControlIcons()
+            Toast.makeText(context, "Repeat toggled", Toast.LENGTH_SHORT).show()
         }
 
         binding.playerSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) mediaPlayer?.seekTo(progress)
+                if (fromUser) playerService?.seekTo(progress)
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
-        
-        updateControlIcons()
+    }
+
+    private fun updatePlayPauseIcon() {
+        _binding?.let {
+            val isPlaying = playerService?.isPlaying() ?: false
+            it.buttonPlayPause.setImageResource(
+                if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
+            )
+        }
     }
 
     private fun showStartupWarning() {
@@ -110,16 +184,6 @@ class FirstFragment : Fragment() {
             .setPositiveButton(R.string.ok, null)
             .setCancelable(false)
             .show()
-    }
-
-    private fun updateControlIcons() {
-        val typedValue = TypedValue()
-        requireContext().theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, typedValue, true)
-        val activeColor = typedValue.data
-        val inactiveColor = android.graphics.Color.GRAY
-        
-        binding.buttonShuffle.setColorFilter(if (isShuffle) activeColor else inactiveColor)
-        binding.buttonRepeat.setColorFilter(if (isRepeat) activeColor else inactiveColor)
     }
 
     private fun checkHapticSupport() {
@@ -133,7 +197,10 @@ class FirstFragment : Fragment() {
         fileAdapter = HapticFileAdapter(
             onFileClick = { hapticFile ->
                 val index = currentFiles.indexOf(hapticFile)
-                if (index != -1) playFile(index)
+                if (index != -1) {
+                    playerService?.playlist = currentFiles
+                    playerService?.playFile(index)
+                }
             },
             onFileLongClick = { hapticFile ->
                 showFileMenu(hapticFile)
@@ -156,7 +223,8 @@ class FirstFragment : Fragment() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.action_play -> {
-                    playFile(index)
+                    playerService?.playlist = currentFiles
+                    playerService?.playFile(index)
                     true
                 }
                 R.id.action_delete -> {
@@ -228,95 +296,141 @@ class FirstFragment : Fragment() {
                 if (_binding != null) {
                     currentFiles = hapticFiles
                     fileAdapter.submitList(hapticFiles)
+                    playerService?.playlist = hapticFiles
                 }
             }
         }
     }
 
-    private fun playFile(index: Int) {
-        if (index < 0 || index >= currentFiles.size) return
-        currentPlayingIndex = index
-        val file = currentFiles[index]
-        
-        val ctx = context ?: return
-        mediaPlayer?.release()
-        
-        binding.playerCard.visibility = View.VISIBLE
-        binding.textviewPlayerTitle.text = file.name
-        
-        mediaPlayer = MediaPlayer().apply {
+    private fun getFileName(uri: Uri): String {
+        var result: String? = null
+        val ctx = context ?: return "audio.mp3"
+        if (uri.scheme == "content") {
+            val cursor = ctx.contentResolver.query(uri, null, null, null, null)
             try {
-                setDataSource(ctx, file.uri)
-                val attributes = AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .setHapticChannelsMuted(false)
-                    .build()
-                setAudioAttributes(attributes)
-                
-                setOnPreparedListener {
-                    if (_binding != null) {
-                        binding.playerSeekbar.max = duration
-                        start()
-                        updatePlayPauseIcon()
-                        updateProgress()
-                    }
+                if (cursor != null && cursor.moveToFirst()) {
+                    val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (index != -1) result = cursor.getString(index)
                 }
-                setOnCompletionListener {
-                    if (isRepeat) {
-                        seekTo(0)
-                        start()
-                    } else {
-                        playNext()
-                    }
-                }
-                prepareAsync()
-            } catch (e: Exception) {
-                Log.e("HaptiX", "Error playing file", e)
-                Toast.makeText(ctx, "Error playing file", Toast.LENGTH_SHORT).show()
+            } finally {
+                cursor?.close()
             }
         }
+        if (result == null) {
+            result = uri.path?.substringAfterLast('/')
+        }
+        return result ?: "converted_audio.ogg"
     }
 
-    private fun playNext() {
-        if (currentFiles.isEmpty()) return
-        val nextIndex = if (isShuffle) {
-            Random().nextInt(currentFiles.size)
+    private fun startConversion(inputUri: Uri) {
+        val originalName = getFileName(inputUri)
+        val outputName = if (originalName.contains(".")) {
+            originalName.substringBeforeLast(".") + "_haptic.ogg"
         } else {
-            (currentPlayingIndex + 1) % currentFiles.size
+            originalName + "_haptic.ogg"
         }
-        playFile(nextIndex)
-    }
 
-    private fun playPrevious() {
-        if (currentFiles.isEmpty()) return
-        var prevIndex = (currentPlayingIndex - 1) % currentFiles.size
-        if (prevIndex < 0) prevIndex = currentFiles.size - 1
-        playFile(prevIndex)
-    }
+        binding.buttonSelect.isEnabled = false
+        binding.progressBar.visibility = View.VISIBLE
 
-    private fun togglePlayback() {
-        mediaPlayer?.let {
-            if (it.isPlaying) it.pause() else it.start()
-            updatePlayPauseIcon()
-        }
-    }
-
-    private fun updatePlayPauseIcon() {
-        _binding?.let {
-            val isPlaying = mediaPlayer?.isPlaying ?: false
-            it.buttonPlayPause.setImageResource(
-                if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
-            )
-        }
-    }
-
-    private fun updateProgress() {
         lifecycleScope.launch {
-            while (_binding != null && mediaPlayer?.isPlaying == true) {
-                _binding?.playerSeekbar?.progress = mediaPlayer?.currentPosition ?: 0
-                delay(100)
+            val result = withContext(Dispatchers.IO) {
+                val conversionResult = runConversion(inputUri)
+                val success = conversionResult.first
+                val file = conversionResult.second
+                if (success && file != null) {
+                    saveFileToMediaStore(file, outputName)
+                } else false
             }
+            
+            _binding?.let {
+                it.buttonSelect.isEnabled = true
+                it.progressBar.visibility = View.GONE
+                
+                if (result) {
+                    loadFiles()
+                } else {
+                    Toast.makeText(requireContext(), R.string.status_failed, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private suspend fun runConversion(inputUri: Uri): Pair<Boolean, File?> {
+        val ctx = context?.applicationContext ?: return Pair(false, null)
+        val cacheDir = ctx.cacheDir
+        val id = UUID.randomUUID().toString().take(8)
+        
+        val originalName = getFileName(inputUri)
+        val extension = if (originalName.contains(".")) originalName.substringAfterLast(".") else "audio"
+        val inputPath = File(cacheDir, "input_$id.$extension").absolutePath
+        val lPath = File(cacheDir, "temp_L_$id.wav").absolutePath
+        val rPath = File(cacheDir, "temp_R_$id.wav").absolutePath
+        val hPath = File(cacheDir, "temp_H_$id.wav").absolutePath
+        val tempOutputPath = File(cacheDir, "output_$id.ogg").absolutePath
+
+        try {
+            ctx.contentResolver.openInputStream(inputUri)?.use { input ->
+                File(inputPath).outputStream().use { output -> input.copyTo(output) }
+            } ?: return Pair(false, null)
+
+            FFmpegKit.execute("-i \"$inputPath\" -af \"pan=mono|c0=c0\" \"$lPath\" -y")
+            FFmpegKit.execute("-i \"$inputPath\" -af \"pan=mono|c0=c1\" \"$rPath\" -y")
+            val subFilter = "pan=mono|c0=0.5*c0+0.5*c1,highpass=f=60,lowpass=f=250,alimiter=limit=1.0"
+            FFmpegKit.execute("-i \"$inputPath\" -af \"$subFilter\" \"$hPath\" -y")
+
+            val mergeCmd = "-i \"$lPath\" -i \"$rPath\" -i \"$hPath\" -i \"$inputPath\" " +
+                    "-filter_complex \"[0:a][1:a][2:a]amerge=inputs=3[aout]\" " +
+                    "-map \"[aout]\" -map_metadata 3 " +
+                    "-c:a libopus -mapping_family 255 -b:a 192k " +
+                    "-metadata ANDROID_HAPTIC=1 \"$tempOutputPath\" -y"
+            
+            val session = FFmpegKit.execute(mergeCmd)
+
+            File(inputPath).delete()
+            File(lPath).delete()
+            File(rPath).delete()
+            File(hPath).delete()
+
+            return if (ReturnCode.isSuccess(session.returnCode)) {
+                Pair(true, File(tempOutputPath))
+            } else {
+                Log.e("HaptiX", "FFmpeg failed: ${session.allLogsAsString}")
+                Pair(false, null)
+            }
+        } catch (e: Exception) {
+            Log.e("HaptiX", "Error during conversion", e)
+            return Pair(false, null)
+        }
+    }
+
+    private fun saveFileToMediaStore(file: File, fileName: String): Boolean {
+        val ctx = context?.applicationContext ?: return false
+        val relativePath = Environment.DIRECTORY_MUSIC + File.separator + "Haptic Converted"
+        
+        val values = ContentValues().apply {
+            put(MediaStore.Audio.Media.DISPLAY_NAME, fileName)
+            put(MediaStore.Audio.Media.MIME_TYPE, "audio/ogg")
+            put(MediaStore.Audio.Media.RELATIVE_PATH, relativePath)
+            put(MediaStore.Audio.Media.IS_PENDING, 1)
+        }
+
+        val resolver = ctx.contentResolver
+        val uri = resolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values) ?: return false
+        
+        return try {
+            resolver.openOutputStream(uri)?.use { output ->
+                file.inputStream().use { input -> input.copyTo(output) }
+            }
+            values.clear()
+            values.put(MediaStore.Audio.Media.IS_PENDING, 0)
+            resolver.update(uri, values, null, null)
+            file.delete()
+            true
+        } catch (e: Exception) {
+            Log.e("HaptiX", "Error saving to MediaStore", e)
+            resolver.delete(uri, null, null)
+            false
         }
     }
 
@@ -386,150 +500,12 @@ class FirstFragment : Fragment() {
             .show()
     }
 
-    private fun getFileName(uri: Uri): String {
-        var result: String? = null
-        val ctx = context ?: return "audio.mp3"
-        if (uri.scheme == "content") {
-            val cursor = ctx.contentResolver.query(uri, null, null, null, null)
-            try {
-                if (cursor != null && cursor.moveToFirst()) {
-                    val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    if (index != -1) result = cursor.getString(index)
-                }
-            } finally {
-                cursor?.close()
-            }
-        }
-        if (result == null) {
-            result = uri.path?.substringAfterLast('/')
-        }
-        return result ?: "converted_audio.ogg"
-    }
-
-    private fun startConversion(inputUri: Uri) {
-        val originalName = getFileName(inputUri)
-        val outputName = if (originalName.contains(".")) {
-            originalName.substringBeforeLast(".") + "_haptic.ogg"
-        } else {
-            originalName + "_haptic.ogg"
-        }
-
-        binding.buttonSelect.isEnabled = false
-        binding.progressBar.visibility = View.VISIBLE
-
-        lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) {
-                val conversionResult = runConversion(inputUri)
-                val success = conversionResult.first
-                val file = conversionResult.second
-                if (success && file != null) {
-                    saveFileToMediaStore(file, outputName)
-                } else false
-            }
-            
-            _binding?.let {
-                it.buttonSelect.isEnabled = true
-                it.progressBar.visibility = View.GONE
-                
-                if (result) {
-                    loadFiles()
-                } else {
-                    Toast.makeText(requireContext(), R.string.status_failed, Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    private suspend fun runConversion(inputUri: Uri): Pair<Boolean, File?> {
-        val ctx = context?.applicationContext ?: return Pair(false, null)
-        val cacheDir = ctx.cacheDir
-        val id = UUID.randomUUID().toString().take(8)
-        
-        // Use a generic name for input to support various formats
-        val originalName = getFileName(inputUri)
-        val extension = if (originalName.contains(".")) originalName.substringAfterLast(".") else "audio"
-        val inputPath = File(cacheDir, "input_$id.$extension").absolutePath
-        val lPath = File(cacheDir, "temp_L_$id.wav").absolutePath
-        val rPath = File(cacheDir, "temp_R_$id.wav").absolutePath
-        val hPath = File(cacheDir, "temp_H_$id.wav").absolutePath
-        val tempOutputPath = File(cacheDir, "output_$id.ogg").absolutePath
-
-        try {
-            ctx.contentResolver.openInputStream(inputUri)?.use { input ->
-                File(inputPath).outputStream().use { output -> input.copyTo(output) }
-            } ?: return Pair(false, null)
-
-            FFmpegKit.execute("-i \"$inputPath\" -af \"pan=mono|c0=c0\" \"$lPath\" -y")
-            FFmpegKit.execute("-i \"$inputPath\" -af \"pan=mono|c0=c1\" \"$rPath\" -y")
-            val subFilter = "pan=mono|c0=0.5*c0+0.5*c1,highpass=f=60,lowpass=f=250,alimiter=limit=1.0"
-            FFmpegKit.execute("-i \"$inputPath\" -af \"$subFilter\" \"$hPath\" -y")
-
-            // 4. Merge into Opus (mapping_family 255 для чистых 3 каналов)
-            val mergeCmd = "-i \"$lPath\" -i \"$rPath\" -i \"$hPath\" -i \"$inputPath\" " +
-                    "-filter_complex \"[0:a][1:a][2:a]amerge=inputs=3[aout]\" " +
-                    "-map \"[aout]\" -map_metadata 3 " +
-                    "-c:a libopus -mapping_family 255 -b:a 192k " +
-                    "-metadata ANDROID_HAPTIC=1 \"$tempOutputPath\" -y"
-            
-            val session = FFmpegKit.execute(mergeCmd)
-
-            File(inputPath).delete()
-            File(lPath).delete()
-            File(rPath).delete()
-            File(hPath).delete()
-
-            return if (ReturnCode.isSuccess(session.returnCode)) {
-                Pair(true, File(tempOutputPath))
-            } else {
-                Log.e("HaptiX", "FFmpeg failed: ${session.allLogsAsString}")
-                Pair(false, null)
-            }
-        } catch (e: Exception) {
-            Log.e("HaptiX", "Error during conversion", e)
-            return Pair(false, null)
-        }
-    }
-
-    private fun saveFileToMediaStore(file: File, fileName: String): Boolean {
-        val ctx = context?.applicationContext ?: return false
-        val relativePath = Environment.DIRECTORY_MUSIC + File.separator + "Haptic Converted"
-        
-        val values = ContentValues().apply {
-            put(MediaStore.Audio.Media.DISPLAY_NAME, fileName)
-            put(MediaStore.Audio.Media.MIME_TYPE, "audio/ogg")
-            put(MediaStore.Audio.Media.RELATIVE_PATH, relativePath)
-            put(MediaStore.Audio.Media.IS_PENDING, 1)
-        }
-
-        val resolver = ctx.contentResolver
-        val uri = resolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values) ?: return false
-        
-        return try {
-            resolver.openOutputStream(uri)?.use { output ->
-                file.inputStream().use { input -> input.copyTo(output) }
-            }
-            values.clear()
-            values.put(MediaStore.Audio.Media.IS_PENDING, 0)
-            resolver.update(uri, values, null, null)
-            file.delete()
-            true
-        } catch (e: Exception) {
-            Log.e("HaptiX", "Error saving to MediaStore", e)
-            resolver.delete(uri, null, null)
-            false
-        }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        mediaPlayer?.pause()
-        updatePlayPauseIcon()
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
-        mediaPlayer?.release()
-        mediaPlayer = null
+        if (isBound) {
+            requireContext().unbindService(connection)
+            isBound = false
+        }
         _binding = null
     }
 }

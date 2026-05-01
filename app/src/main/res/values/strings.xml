@@ -27,6 +27,13 @@
     <string name="cancel">Cancel</string>
     <string name="info_title">File Info</string>
 
+    <string name="notif_channel_name">HaptiX Playback</string>
+    <string name="notif_play">Play</string>
+    <string name="notif_pause">Pause</string>
+    <string name="notif_next">Next</string>
+    <string name="notif_prev">Prev</string>
+    <string name="notif_content_text">HaptiX Player</string>
+
     <string name="warning_title">Warning</string>
     <string name="warning_message">The author of this application is not responsible for a failed vibration motor. It is not recommended to use for prolonged listening.\n\nTip: you can reduce the vibration intensity in the phone settings under sound parameters.</string>
 </resources>

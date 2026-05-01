@@ -26,6 +26,13 @@
     <string name="cancel">Отмена</string>
     <string name="info_title">Информация о файле</string>
 
+    <string name="notif_channel_name">Воспроизведение HaptiX</string>
+    <string name="notif_play">Играть</string>
+    <string name="notif_pause">Пауза</string>
+    <string name="notif_next">След.</string>
+    <string name="notif_prev">Пред.</string>
+    <string name="notif_content_text">Плеер HaptiX</string>
+
     <string name="warning_title">Предупреждение</string>
     <string name="warning_message">Автор данного приложения не несет ответственности за вышедший из строя вибромотор. Не рекомендуется использовать для продолжительного прослушивания.\n\nСовет: интенсивность вибрации можно убавить в настройках телефона в параметрах звука.</string>
 </resources>

@@ -26,6 +26,13 @@
     <string name="cancel">Cancelar</string>
     <string name="info_title">Informações do Arquivo</string>
 
+    <string name="notif_channel_name">Reprodução HaptiX</string>
+    <string name="notif_play">Reproduzir</string>
+    <string name="notif_pause">Pausar</string>
+    <string name="notif_next">Próximo</string>
+    <string name="notif_prev">Anterior</string>
+    <string name="notif_content_text">Player HaptiX</string>
+
     <string name="warning_title">Aviso</string>
     <string name="warning_message">O autor deste aplicativo não se responsabiliza por falhas no motor de vibração. Não é recomendado o uso para audição prolongada.\n\nDica: você pode reduzir a intensidade da vibração nas configurações do telefone, em parâmetros de som.</string>
 </resources>

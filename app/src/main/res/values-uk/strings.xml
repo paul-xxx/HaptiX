@@ -26,6 +26,13 @@
     <string name="cancel">Скасувати</string>
     <string name="info_title">Інформація про файл</string>
 
+    <string name="notif_channel_name">Відтворення HaptiX</string>
+    <string name="notif_play">Грати</string>
+    <string name="notif_pause">Пауза</string>
+    <string name="notif_next">Наст.</string>
+    <string name="notif_prev">Поперед.</string>
+    <string name="notif_content_text">Плеєр HaptiX</string>
+
     <string name="warning_title">Попередження</string>
     <string name="warning_message">Автор цього додатка не несе відповідальності за вихід з ладу вібромотора. Не рекомендується використовувати для тривалого прослуховування.\n\nПорада: інтенсивність вібрації можна зменшити в налаштуваннях телефону в параметрах звуку.</string>
 </resources>

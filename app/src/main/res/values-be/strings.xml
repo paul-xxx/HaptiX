@@ -26,6 +26,13 @@
     <string name="cancel">Адмена</string>
     <string name="info_title">Інфармацыя пра файл</string>
 
+    <string name="notif_channel_name">Прайграванне HaptiX</string>
+    <string name="notif_play">Іграць</string>
+    <string name="notif_pause">Паўза</string>
+    <string name="notif_next">Наст.</string>
+    <string name="notif_prev">Папярэд.</string>
+    <string name="notif_content_text">Плэер HaptiX</string>
+
     <string name="warning_title">Папярэджанне</string>
     <string name="warning_message">Аўтар гэтага прыкладання не нясе адказнасці за вібраматор, які выйшаў са строю. Не рэкамендуецца выкарыстоўваць для працяглага праслухоўвання.\n\nПарада: інтэнсіўнасць вібрацыі можна паменшыць у наладах тэлефона ў параметрах гуку.</string>
 </resources>
